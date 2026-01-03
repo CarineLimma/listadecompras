@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Lista de Compras</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <h1> Lista de Compras</h1>
+    <p>Controle seus gastos em tempo real</p>
+  </header>
+
+
+  <section class="card form-card">
+    <input type="text" id="produto" placeholder="Produto">
+
+    <select id="categoria">
+      <option value="Alimentos">🥦 Alimentos</option>
+      <option value="Feira">🥦 Feira</option>
+      <option value="Carnes">🥩 Carnes</option>
+      <option value="Produtos de Limpeza">🧼 Limpeza</option>
+      <option value="Higiene Pessoal">🪥 Higiene Pessoal</option>
+      <option value="Outros">📦 Outros</option>
+    </select>
+
+    <div class="row">
+      <input type="number" id="quantidade" placeholder="Qtd" min="1">
+      <input type="number" id="valor" placeholder="R$" step="0.01">
+    </div>
+
+    <button onclick="adicionarItem()">+ Adicionar item</button>
+  </section>
+
+  <section id="listas"></section>
+
+  <footer class="total-footer">
+    <span>Total da compra</span>
+    <strong>R$ <span id="totalGeral">0.00</span></strong>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
