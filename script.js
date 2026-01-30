@@ -1,104 +1,206 @@
-let categorias = JSON.parse(localStorage.getItem("listaCompras")) || {};
-let totalGeral = 0;
+const listasContainer = document.getElementById("listasContainer");
+const totalItensEl = document.getElementById("totalItens");
+const totalGeralEl = document.getElementById("totalGeral");
 
-window.onload = () => {
-  atualizarLista();
-  calcularTotalGeral();
-};
+const categoriaSelect = document.getElementById("categoria");
+const nomeItem = document.getElementById("nomeItem");
+const toggleTheme = document.getElementById("toggleTheme");
 
-function adicionarItem() {
-  const produto = document.getElementById("produto").value;
-  const categoria = document.getElementById("categoria").value;
-  const quantidade = Number(document.getElementById("quantidade").value);
-  const valor = Number(document.getElementById("valor").value);
 
-  if (!produto || quantidade <= 0 || valor <= 0) {
-    alert("Preencha todos os campos corretamente.");
+
+function adicionarItem(){
+
+  const categoria = categoriaSelect.value;
+  const nome = nomeItem.value.trim();
+
+  if(!categoria || !nome){
+    alert("Preencha o item e a categoria");
     return;
   }
 
-  const totalItem = quantidade * valor;
+  let card = document.querySelector(`[data-cat="${categoria}"]`);
 
-  if (!categorias[categoria]) {
-    categorias[categoria] = {
-      itens: [],
-      totalCategoria: 0
-    };
-  }
+  if(!card){
+    card = document.createElement("div");
+    card.className = "categoria-card";
+    card.dataset.cat = categoria;
 
-  categorias[categoria].itens.push({
-    produto,
-    quantidade,
-    valor,
-    totalItem
-  });
+    card.innerHTML = `
+      <div class="categoria-topo">
+        <h2>${categoria}</h2>
+        <button class="excluir-categoria" onclick="excluirCategoria(this)">🗑</button>
+      </div>
 
-  categorias[categoria].totalCategoria += totalItem;
+      <div class="lista-itens"></div>
 
-  salvarDados();
-  atualizarLista();
-  calcularTotalGeral();
-  limparCampos();
-}
-
-function removerItem(categoria, index) {
-  categorias[categoria].totalCategoria -= categorias[categoria].itens[index].totalItem;
-  categorias[categoria].itens.splice(index, 1);
-
-  if (categorias[categoria].itens.length === 0) {
-    delete categorias[categoria];
-  }
-
-  salvarDados();
-  atualizarLista();
-  calcularTotalGeral();
-}
-
-function calcularTotalGeral() {
-  totalGeral = 0;
-
-  for (let categoria in categorias) {
-    totalGeral += categorias[categoria].totalCategoria;
-  }
-
-  document.getElementById("totalGeral").innerText = totalGeral.toFixed(2);
-}
-
-function atualizarLista() {
-  const listas = document.getElementById("listas");
-  listas.innerHTML = "";
-
-  for (let categoria in categorias) {
-    const div = document.createElement("div");
-    div.className = "categoria";
-
-    let html = `<h3>${categoria}</h3>`;
-
-    categorias[categoria].itens.forEach((item, index) => {
-      html += `
-        <div class="item">
-          <span>${item.produto} (x${item.quantidade}) - R$ ${item.totalItem.toFixed(2)}</span>
-          <button onclick="removerItem('${categoria}', ${index})">X</button>
-        </div>
-      `;
-    });
-
-    html += `
-      <hr>
-      <strong>Total da categoria: R$ ${categorias[categoria].totalCategoria.toFixed(2)}</strong>
+      <p class="subtotal">
+        Subtotal: R$ <span>0.00</span>
+      </p>
     `;
 
-    div.innerHTML = html;
-    listas.appendChild(div);
+    listasContainer.appendChild(card);
+  }
+
+  const lista = card.querySelector(".lista-itens");
+
+  const item = document.createElement("div");
+  item.className = "item-linha";
+
+  item.innerHTML = `
+    <input type="checkbox" onchange="marcarComprado(this)">
+
+    <span class="nome">${nome}</span>
+
+    <input type="number" placeholder="Qtd" oninput="calcularItem(this)">
+
+    <input type="number" placeholder="R$" oninput="calcularItem(this)">
+
+    <div class="item-total">R$ 0.00</div>
+
+    <button class="editar" onclick="editarItem(this)">✏️</button>
+    <button class="remover" onclick="removerItem(this)">🗑</button>
+  `;
+
+  lista.appendChild(item);
+
+  nomeItem.value = "";
+
+  atualizarResumo();
+  salvar();
+}
+
+
+
+function calcularItem(input){
+
+  const linha = input.closest(".item-linha");
+  const campos = linha.querySelectorAll("input[type=number]");
+
+  const qtd = parseFloat(campos[0].value) || 0;
+  const valor = parseFloat(campos[1].value) || 0;
+
+  const total = qtd * valor;
+
+  linha.querySelector(".item-total").innerText = `R$ ${total.toFixed(2)}`;
+
+  atualizarSubtotal(linha);
+  atualizarResumo();
+  salvar();
+}
+
+
+
+function atualizarSubtotal(linha){
+
+  const card = linha.closest(".categoria-card");
+  const totais = card.querySelectorAll(".item-total");
+
+  let soma = 0;
+
+  totais.forEach(t=>{
+    soma += parseFloat(t.innerText.replace("R$","")) || 0;
+  });
+
+  card.querySelector(".subtotal span").innerText = soma.toFixed(2);
+}
+
+
+
+function atualizarResumo(){
+
+  const itens = document.querySelectorAll(".item-linha");
+  let total = 0;
+
+  itens.forEach(i=>{
+    total += parseFloat(
+      i.querySelector(".item-total").innerText.replace("R$","")
+    ) || 0;
+  });
+
+  totalItensEl.innerText = itens.length;
+  totalGeralEl.innerText = total.toFixed(2);
+}
+
+
+
+function removerItem(btn){
+
+  const linha = btn.closest(".item-linha");
+  const card = linha.closest(".categoria-card");
+
+  linha.remove();
+
+  if(card.querySelectorAll(".item-linha").length === 0){
+    card.remove();
+  }
+
+  atualizarResumo();
+  salvar();
+}
+
+
+
+function excluirCategoria(btn){
+
+  btn.closest(".categoria-card").remove();
+
+  atualizarResumo();
+  salvar();
+}
+
+
+
+function marcarComprado(check){
+  check.closest(".item-linha").classList.toggle("comprado");
+  salvar();
+}
+
+
+
+function editarItem(btn){
+
+  const nome = btn.closest(".item-linha").querySelector(".nome");
+
+  const novo = prompt("Editar item:", nome.innerText);
+
+  if(novo){
+    nome.innerText = novo;
+  }
+
+  salvar();
+}
+
+
+
+function salvar(){
+  localStorage.setItem("listaCompras", listasContainer.innerHTML);
+}
+
+
+
+function carregar(){
+
+  const dados = localStorage.getItem("listaCompras");
+
+  if(dados){
+    listasContainer.innerHTML = dados;
+    atualizarResumo();
   }
 }
 
-function salvarDados() {
-  localStorage.setItem("listaCompras", JSON.stringify(categorias));
-}
+carregar();
 
-function limparCampos() {
-  document.getElementById("produto").value = "";
-  document.getElementById("quantidade").value = "";
-  document.getElementById("valor").value = "";
+
+toggleTheme.onclick = () => {
+
+  document.body.classList.toggle("dark");
+
+  localStorage.setItem(
+    "theme",
+    document.body.classList.contains("dark")
+  );
+};
+
+if(localStorage.getItem("theme") === "true"){
+  document.body.classList.add("dark");
 }

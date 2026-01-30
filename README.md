@@ -1,2 +1,0 @@
-# listadecompras
-lista de compras
