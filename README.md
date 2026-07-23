@@ -30,7 +30,6 @@ listadecompras/
 ├── index.html
 ├── style.css
 ├── script.js
-└── README.md
 
 🚀 Como executar o projeto
 
